@@ -28,12 +28,7 @@ pub mod rt;
 // the main rustlex macro
 pub fn rustlex<'a>(cx: &'a mut ExtCtxt, sp: Span, ident:Ident, args: Vec<TokenTree>)
         -> Box<MacResult+'a> {
-    let mut p = ::syntax::parse::new_parser_from_tts(
-        cx.parse_sess,
-        cx.cfg.clone(),
-        args
-    );
-
+    let mut p = cx.new_parser_from_tts(&args);
     let def = parser::parse(ident, &mut p)
         .unwrap_or_else(|mut e| {
             e.emit();
@@ -51,7 +46,7 @@ pub fn plugin_registrar(reg: &mut syntex::Registry) {
 #[cfg(not(feature = "with-syntex"))]
 pub fn plugin_registrar(reg: &mut rustc_plugin::Registry) {
     reg.register_syntax_extension(
-        syntax::parse::token::intern("rustlex"),
+        syntax::ast::Name::intern("rustlex"),
         syntax::ext::base::IdentTT(Box::new(rustlex), None, false)
     );
 }

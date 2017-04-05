@@ -5,11 +5,11 @@ use syntax::attr;
 use syntax::ast;
 use syntax::ast::Ident;
 use syntax::codemap::Span;
+use syntax::codemap::Spanned;
 use syntax::errors;
 use syntax::ext::base::ExtCtxt;
 use syntax::ext::base::MacResult;
 use syntax::ext::build::AstBuilder;
-use syntax::parse::token;
 use syntax::ptr::P;
 use syntax::util::small_vector::SmallVector;
 
@@ -74,7 +74,7 @@ pub fn lexer_struct(cx: &mut ExtCtxt, sp: Span, ident:Ident, props: &[Prop]) -> 
 
     fields.push(ast::StructField {
         span: sp,
-        ident: Some(ast::Ident::with_empty_ctxt(token::intern("_input"))),
+        ident: Some(ast::Ident::with_empty_ctxt(ast::Name::intern("_input"))),
         vis:ast::Visibility::Public,
         id: ast::DUMMY_NODE_ID,
         ty: quote_ty!(&*cx, ::rustlex::rt::RustLexLexer<R>),
@@ -83,17 +83,21 @@ pub fn lexer_struct(cx: &mut ExtCtxt, sp: Span, ident:Ident, props: &[Prop]) -> 
 
     fields.push(ast::StructField {
         span: sp,
-        ident: Some(ast::Ident::with_empty_ctxt(token::intern("_state"))),
+        ident: Some(ast::Ident::with_empty_ctxt(ast::Name::intern("_state"))),
         vis: ast::Visibility::Public,
         id: ast::DUMMY_NODE_ID,
         ty: quote_ty!(&*cx, usize),
         attrs: vec![]
     });
 
-    let docattr = attr::mk_attr_outer(attr::mk_attr_id(), attr::mk_list_item(
-        token::InternedString::new("allow"),
+    let docattr = attr::mk_attr_outer(sp, attr::mk_attr_id(), attr::mk_list_item(
+        ast::Name::intern("allow"),
         vec![
-            attr::mk_word_item(token::InternedString::new("missing_docs"))
+            Spanned {
+                node: ast::NestedMetaItemKind::MetaItem(
+                          attr::mk_word_item(ast::Name::intern("missing_docs"))),
+                span: sp,
+            }
         ]
     ));
 
@@ -105,20 +109,22 @@ pub fn lexer_struct(cx: &mut ExtCtxt, sp: Span, ident:Ident, props: &[Prop]) -> 
             ast::VariantData::Struct(fields, ast::DUMMY_NODE_ID),
             ast::Generics {
                 lifetimes: Vec::new(),
-                ty_params: P::from_vec(vec![
-                    cx.typaram(sp, ast::Ident::with_empty_ctxt(token::intern("R")),
-                    P::from_vec(vec![
+                ty_params: vec![
+                    cx.typaram(sp, ast::Ident::with_empty_ctxt(ast::Name::intern("R")),
+                    vec![],
+                    vec![
                         cx.typarambound(cx.path_global(sp, vec![
-                            ast::Ident::with_empty_ctxt(token::intern("std")),
-                            ast::Ident::with_empty_ctxt(token::intern("io")),
-                            ast::Ident::with_empty_ctxt(token::intern("Read"))
-                    ]))]),
+                            ast::Ident::with_empty_ctxt(ast::Name::intern("std")),
+                            ast::Ident::with_empty_ctxt(ast::Name::intern("io")),
+                            ast::Ident::with_empty_ctxt(ast::Name::intern("Read"))
+                    ]))],
                     None)
-                ]),
+                ],
                 where_clause: ast::WhereClause {
                     id: ast::DUMMY_NODE_ID,
                     predicates: Vec::new(),
-                }
+                },
+                span:sp,
             }
         ),
         vis: ast::Visibility::Public,
@@ -177,7 +183,7 @@ pub fn actions_match(lex:&Lexer, cx: &mut ExtCtxt, sp: Span) -> P<ast::Expr> {
 fn simple_follow_method(cx:&mut ExtCtxt, sp:Span, lex:&Lexer) -> P<ast::Item> {
     // * transtable: an array of N arrays of 256 uints, N being the number
     //   of states in the FSM, which gives the transitions between states
-    let ty_vec = cx.ty(sp, ast::TyKind::FixedLengthVec(
+    let ty_vec = cx.ty(sp, ast::TyKind::Array(
         cx.ty_ident(sp, cx.ident_of("usize")),
         cx.expr_usize(sp, 256)));
     let mut transtable = Vec::new();
@@ -191,7 +197,7 @@ fn simple_follow_method(cx:&mut ExtCtxt, sp:Span, lex:&Lexer) -> P<ast::Item> {
         transtable.push(trans_expr);
     }
 
-    let ty_transtable = cx.ty(sp, ast::TyKind::FixedLengthVec(
+    let ty_transtable = cx.ty(sp, ast::TyKind::Array(
         ty_vec,
         cx.expr_usize(sp, lex.auto.states.len())
     ));
@@ -216,7 +222,7 @@ fn simple_follow_method(cx:&mut ExtCtxt, sp:Span, lex:&Lexer) -> P<ast::Item> {
 fn simple_accepting_method(cx:&mut ExtCtxt, sp:Span, lex:&Lexer) -> P<ast::Item> {
     // * accepting: an array of N uints, giving the action associated to
     //   each state
-    let ty_acctable = cx.ty(sp, ast::TyKind::FixedLengthVec(
+    let ty_acctable = cx.ty(sp, ast::TyKind::Array(
         cx.ty_ident(sp, cx.ident_of("usize")),
         cx.expr_usize(sp, lex.auto.states.len())
     ));
@@ -253,9 +259,9 @@ pub fn user_lexer_impl(cx: &mut ExtCtxt, sp: Span, lex:&Lexer) -> Vec<P<ast::Ite
     }
 
     let initial = lex.auto.initials[lex.conditions[0].1];
-    fields.push(cx.field_imm(sp, ast::Ident::with_empty_ctxt(token::intern("_input")),
+    fields.push(cx.field_imm(sp, ast::Ident::with_empty_ctxt(ast::Name::intern("_input")),
         quote_expr!(&*cx, ::rustlex::rt::RustLexLexer::new(reader))));
-    fields.push(cx.field_imm(sp, ast::Ident::with_empty_ctxt(token::intern("_state")),
+    fields.push(cx.field_imm(sp, ast::Ident::with_empty_ctxt(ast::Name::intern("_state")),
         quote_expr!(&*cx, $initial)));
 
     let init_expr = cx.expr_struct_ident(sp, lex.ident, fields);
