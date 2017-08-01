@@ -123,12 +123,14 @@ pub fn lexer_struct(cx: &mut ExtCtxt, sp: Span, ident:Ident, props: &[Prop]) -> 
                 where_clause: ast::WhereClause {
                     id: ast::DUMMY_NODE_ID,
                     predicates: Vec::new(),
+                    span: sp,
                 },
                 span:sp,
             }
         ),
         vis: ast::Visibility::Public,
-        span:sp
+        span:sp,
+        tokens: None,
     })
 }
 
