@@ -108,9 +108,8 @@ pub fn lexer_struct(cx: &mut ExtCtxt, sp: Span, ident:Ident, props: &[Prop]) -> 
         node: ast::ItemKind::Struct(
             ast::VariantData::Struct(fields, ast::DUMMY_NODE_ID),
             ast::Generics {
-                lifetimes: Vec::new(),
-                ty_params: vec![
-                    cx.typaram(sp, ast::Ident::with_empty_ctxt(ast::Name::intern("R")),
+                params: vec![
+                    ast::GenericParam::Type(cx.typaram(sp, ast::Ident::with_empty_ctxt(ast::Name::intern("R")),
                     vec![],
                     vec![
                         cx.typarambound(cx.path_global(sp, vec![
@@ -118,7 +117,7 @@ pub fn lexer_struct(cx: &mut ExtCtxt, sp: Span, ident:Ident, props: &[Prop]) -> 
                             ast::Ident::with_empty_ctxt(ast::Name::intern("io")),
                             ast::Ident::with_empty_ctxt(ast::Name::intern("Read"))
                     ]))],
-                    None)
+                    None))
                 ],
                 where_clause: ast::WhereClause {
                     id: ast::DUMMY_NODE_ID,
