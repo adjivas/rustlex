@@ -55,7 +55,7 @@ pub fn lexer_field(sp: Span, name: ast::Ident, ty: P<ast::Ty>) -> ast::StructFie
     ast::StructField {
         span: sp,
         ident: Some(name),
-        vis: ast::Visibility::Public,
+        vis: Spanned { span: sp, node: ast::VisibilityKind::Public },
         id: ast::DUMMY_NODE_ID,
         ty: ty,
         attrs: vec![]
@@ -75,7 +75,7 @@ pub fn lexer_struct(cx: &mut ExtCtxt, sp: Span, ident:Ident, props: &[Prop]) -> 
     fields.push(ast::StructField {
         span: sp,
         ident: Some(ast::Ident::with_empty_ctxt(ast::Name::intern("_input"))),
-        vis:ast::Visibility::Public,
+        vis: Spanned { span: sp, node: ast::VisibilityKind::Public },
         id: ast::DUMMY_NODE_ID,
         ty: quote_ty!(&*cx, ::rustlex::rt::RustLexLexer<R>),
         attrs: vec![]
@@ -84,7 +84,7 @@ pub fn lexer_struct(cx: &mut ExtCtxt, sp: Span, ident:Ident, props: &[Prop]) -> 
     fields.push(ast::StructField {
         span: sp,
         ident: Some(ast::Ident::with_empty_ctxt(ast::Name::intern("_state"))),
-        vis: ast::Visibility::Public,
+        vis: Spanned { span: sp, node: ast::VisibilityKind::Public },
         id: ast::DUMMY_NODE_ID,
         ty: quote_ty!(&*cx, usize),
         attrs: vec![]
@@ -127,7 +127,7 @@ pub fn lexer_struct(cx: &mut ExtCtxt, sp: Span, ident:Ident, props: &[Prop]) -> 
                 span:sp,
             }
         ),
-        vis: ast::Visibility::Public,
+        vis: Spanned { span: sp, node: ast::VisibilityKind::Public },
         span:sp,
         tokens: None,
     })
