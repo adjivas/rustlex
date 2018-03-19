@@ -63,7 +63,8 @@ impl<'a> Tokenizer<'a> for Parser<'a> {
     fn token(&self) -> &token::Token { &self.token }
     fn bump(&mut self) { self.bump() }
     fn bump_and_get(&mut self) -> token::Token {
-        let old_token = mem::replace(&mut self.token, token::Underscore);
+        let underscore = Ident::with_empty_ctxt(keywords::Underscore.name());
+        let old_token = mem::replace(&mut self.token, token::Ident(underscore));
         self.bump();
         old_token
     }
