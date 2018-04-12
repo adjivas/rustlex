@@ -55,7 +55,7 @@ pub fn lexer_field(sp: Span, name: ast::Ident, ty: P<ast::Ty>) -> ast::StructFie
     ast::StructField {
         span: sp,
         ident: Some(name),
-        vis: Spanned { span: sp, node: ast::VisibilityKind::Public },
+        vis: ast::Visibility::Public,
         id: ast::DUMMY_NODE_ID,
         ty: ty,
         attrs: vec![]
@@ -75,7 +75,7 @@ pub fn lexer_struct(cx: &mut ExtCtxt, sp: Span, ident:Ident, props: &[Prop]) -> 
     fields.push(ast::StructField {
         span: sp,
         ident: Some(ast::Ident::with_empty_ctxt(ast::Name::intern("_input"))),
-        vis: Spanned { span: sp, node: ast::VisibilityKind::Public },
+        vis: ast::Visibility::Public,
         id: ast::DUMMY_NODE_ID,
         ty: quote_ty!(&*cx, ::rustlex::rt::RustLexLexer<R>),
         attrs: vec![]
@@ -84,7 +84,7 @@ pub fn lexer_struct(cx: &mut ExtCtxt, sp: Span, ident:Ident, props: &[Prop]) -> 
     fields.push(ast::StructField {
         span: sp,
         ident: Some(ast::Ident::with_empty_ctxt(ast::Name::intern("_state"))),
-        vis: Spanned { span: sp, node: ast::VisibilityKind::Public },
+        vis: ast::Visibility::Public,
         id: ast::DUMMY_NODE_ID,
         ty: quote_ty!(&*cx, usize),
         attrs: vec![]
@@ -108,26 +108,25 @@ pub fn lexer_struct(cx: &mut ExtCtxt, sp: Span, ident:Ident, props: &[Prop]) -> 
         node: ast::ItemKind::Struct(
             ast::VariantData::Struct(fields, ast::DUMMY_NODE_ID),
             ast::Generics {
-                params: vec![
-                    ast::GenericParam::Type(cx.typaram(sp, ast::Ident::with_empty_ctxt(ast::Name::intern("R")),
-                    vec![],
-                    vec![
-                        cx.typarambound(cx.path_global(sp, vec![
-                            ast::Ident::with_empty_ctxt(ast::Name::intern("std")),
-                            ast::Ident::with_empty_ctxt(ast::Name::intern("io")),
-                            ast::Ident::with_empty_ctxt(ast::Name::intern("Read"))
-                    ]))],
-                    None))
-                ],
-                where_clause: ast::WhereClause {
-                    id: ast::DUMMY_NODE_ID,
-                    predicates: Vec::new(),
-                    span: sp,
-                },
                 span:sp,
+		lifetimes: Vec::new(),
+		ty_params: vec![
+		    cx.typaram(sp, ast::Ident::with_empty_ctxt(ast::Name::intern("R"))),
+		    vec![
+		        cx.typarambound(cx.path_global(sp, vec!(
+                        ast::Ident::with_empty_ctxt(ast::Name::intern("std")),
+                        ast::Ident::with_empty_ctxt(ast::Name::intern("io")),
+                        ast::Ident::with_empty_ctxt(ast::Name::intern("Read")),
+		    )))],
+		    None
+		],
+		where_clause: ast::WhereClause {
+		    id: ast::DUMMY_NODE_ID,
+		    predicates: Vec::new(),
+		}
             }
         ),
-        vis: Spanned { span: sp, node: ast::VisibilityKind::Public },
+        vis: ast::Visibility::Public,
         span:sp,
         tokens: None,
     })

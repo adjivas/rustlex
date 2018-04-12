@@ -1,22 +1,22 @@
 #![cfg_attr(not(feature = "with-syntex"), feature(plugin_registrar,rustc_private,quote))]
 
 #[cfg(feature = "with-syntex")] extern crate quasi;
-#[cfg(feature = "with-syntex")] extern crate syntex;
-#[cfg(feature = "with-syntex")] extern crate syntex_syntax as syntax;
+extern crate syntex;
+extern crate syntex_syntax as syntax;
 
-#[cfg(not(feature = "with-syntex"))] extern crate syntax;
 #[cfg(not(feature = "with-syntex"))] extern crate rustc_plugin;
+
+#[cfg(not(feature = "with-syntex"))] use syntax::tokenstream::TokenTree;
+#[cfg(feature = "with-syntex")] use syntax::tokenstream::TokenTree;
 
 #[macro_use] extern crate log;
 extern crate bit_set;
 extern crate fsa;
 
-#[cfg(not(feature = "with-syntex"))] use syntax::tokenstream::TokenTree;
-#[cfg(feature = "with-syntex")] use syntax::ast::TokenTree;
-
 use syntax::ast::Ident;
 use syntax::codemap::Span;
 use syntax::ext::base::{ExtCtxt, MacResult};
+
 
 mod analysis;
 mod lexer;
@@ -28,7 +28,11 @@ pub mod rt;
 // the main rustlex macro
 pub fn rustlex<'a>(cx: &'a mut ExtCtxt, sp: Span, ident:Ident, args: Vec<TokenTree>)
         -> Box<MacResult+'a> {
-    let mut p = cx.new_parser_from_tts(&args);
+    let mut p = ::syntax::parse::new_parser_from_tts(
+        cx.parse_sess,
+        args
+    );
+
     let def = parser::parse(ident, &mut p)
         .unwrap_or_else(|mut e| {
             e.emit();

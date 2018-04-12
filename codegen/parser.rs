@@ -3,7 +3,6 @@
 // uses libsyntax to parse what Rustc gives us
 
 use std::collections::hash_map::HashMap;
-use std::mem;
 use lexer::Condition;
 use lexer::LexerDef;
 use lexer::Rule;
@@ -63,10 +62,7 @@ impl<'a> Tokenizer<'a> for Parser<'a> {
     fn token(&self) -> &token::Token { &self.token }
     fn bump(&mut self) { self.bump() }
     fn bump_and_get(&mut self) -> token::Token {
-        let underscore = Ident::with_empty_ctxt(keywords::Underscore.name());
-        let old_token = mem::replace(&mut self.token, token::Ident(underscore, false));
-        self.bump();
-        old_token
+        self.bump_and_get()
     }
     fn eat(&mut self, tok: &token::Token) -> bool {
         self.eat(tok)
@@ -100,7 +96,7 @@ type Env = HashMap<Name, usize>;
 fn get_tokens<'a>(parser: &mut Parser<'a>) -> Result<Ident,DiagnosticBuilder<'a>> {
     let token = Name::intern("token");
     match parser.token {
-        token::Ident(id, _) if id.name == token => {
+        token::Ident(id) if id.name == token => {
             parser.bump();
             let token = try!(parser.parse_ident());
             try!(parser.expect(&token::Semi));
@@ -116,7 +112,7 @@ fn get_properties<'a>(parser: &mut Parser<'a>)
     let prop = Name::intern("property");
     loop {
         match parser.token {
-            token::Ident(id, _) if id.name == prop => {
+            token::Ident(id) if id.name == prop => {
                 parser.bump();
                 let name = try!(parser.parse_ident());
                 try!(parser.expect(&token::Colon));
@@ -151,7 +147,7 @@ fn get_char_class<'a, T: Tokenizer<'a>>(parser: &mut T)
             }
 
             token::Literal(token::Lit::Char(i), _) => {
-                let ch = parse::char_lit(&*i.as_str(), None).0;
+                let ch = parse::char_lit(&*i.as_str()).0;
 
                 match *parser.token() {
                     token::BinOp(token::Minus) => {
@@ -159,7 +155,7 @@ fn get_char_class<'a, T: Tokenizer<'a>>(parser: &mut T)
                         parser.bump();
                         let ch2 = match parser.bump_and_get() {
                             token::Literal(token::Lit::Char(ch), _) =>
-                                parse::char_lit(&*ch.as_str() , None).0,
+                                parse::char_lit(&*ch.as_str()).0,
                             _ => return Err(parser.unexpected())
                         };
                         if ch >= ch2 {
@@ -221,7 +217,7 @@ fn get_const<'a, T: Tokenizer<'a>>(parser: &mut T, env: &Env)
         }
         token::Literal(token::Lit::Char(ch), _) =>
             Ok(Box::new(regex::Literal(
-                regex::Char(parse::char_lit(&*ch.as_str(), None).0)
+                regex::Char(parse::char_lit(&*ch.as_str()).0)
             ))),
         token::Literal(token::Lit::Str_(id), _) =>
             match regex::string(&*id.as_str()) {
@@ -232,7 +228,7 @@ fn get_const<'a, T: Tokenizer<'a>>(parser: &mut T, env: &Env)
                         "bad string constant in regular expression"))
                 }
             },
-        token::Ident(id, _) => match env.get(&id.name).cloned() {
+        token::Ident(id) => match env.get(&id.name).cloned() {
             Some(value) => Ok(Box::new(regex::Var(value))),
             None => {
                 let last_span = parser.last_span();
@@ -379,7 +375,7 @@ fn get_conditions<'a>(parser: &mut Parser<'a>, env: &Env)
         // "Initial" condition
         // in any case, we expect an ident or a regex first
         match parser.token {
-            token::Ident(id, _) => {
+            token::Ident(id) => {
                 // this may be either the start of a regexp followed
                 // by an arrow and an action or a condition followed
                 // by an opening brace.
